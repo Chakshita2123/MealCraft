@@ -1,0 +1,404 @@
+.recipe-detail-page {
+  min-height: 100vh;
+  padding-top: 64px;
+}
+
+/* ---- Hero ---- */
+.detail-hero {
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.detail-hero-img {
+  width: 100%;
+  height: 360px;
+  object-fit: cover;
+  border-radius: var(--radius-xl);
+  display: block;
+  margin-top: 1rem;
+}
+
+.hero-glow {
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 80px;
+  background: var(--accent);
+  filter: blur(80px);
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+.detail-hero-overlay {
+  position: absolute;
+  top: 1rem;
+  left: 1.5rem;
+  right: 1.5rem;
+  padding: 1rem;
+  z-index: 2;
+}
+
+.back-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: rgba(13, 10, 10, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.back-btn:hover {
+  background: rgba(13, 10, 10, 0.8);
+  transform: translateX(-2px);
+}
+
+/* ---- Body ---- */
+.detail-body {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 3rem;
+}
+
+/* Title */
+.detail-title-section {
+  margin-bottom: 1.5rem;
+  animation: fadeInUp 0.4s ease;
+}
+
+.detail-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.2;
+  margin-bottom: 0.75rem;
+}
+
+.detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.detail-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+}
+
+.detail-tag.diff-easy { color: var(--accent); border-color: rgba(0, 200, 150, 0.2); }
+.detail-tag.diff-medium { color: #f0a500; border-color: rgba(240, 165, 0, 0.2); }
+.detail-tag.diff-hard { color: var(--terracotta); border-color: rgba(196, 98, 45, 0.2); }
+.detail-tag.tag-veg { color: var(--accent); border-color: rgba(0, 200, 150, 0.2); }
+.detail-tag.tag-gf { color: var(--accent-secondary); border-color: rgba(124, 58, 237, 0.2); }
+
+/* Actions */
+.detail-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 1.5rem;
+  animation: fadeInUp 0.4s 0.05s ease forwards;
+  opacity: 0;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  font-family: inherit;
+}
+
+.action-btn:hover {
+  border-color: var(--accent);
+  background: rgba(0, 200, 150, 0.05);
+}
+
+.action-btn.saved {
+  border-color: rgba(255, 107, 107, 0.3);
+  background: rgba(255, 107, 107, 0.05);
+}
+
+/* Servings Adjuster */
+.servings-adjuster {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.25rem !important;
+  margin-bottom: 1.5rem;
+  animation: fadeInUp 0.4s 0.1s ease forwards;
+  opacity: 0;
+}
+
+.servings-adjuster svg { color: var(--accent); }
+
+.servings-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.servings-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.servings-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.servings-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: rgba(0, 200, 150, 0.1);
+  color: var(--accent);
+}
+
+.servings-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.servings-count {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  min-width: 32px;
+  text-align: center;
+}
+
+/* Nutrition Row */
+.nutrition-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  animation: fadeInUp 0.4s 0.15s ease forwards;
+  opacity: 0;
+}
+
+.nutrition-mini-card {
+  text-align: center;
+  padding: 1rem 0.5rem !important;
+  transition: all 0.25s ease;
+}
+
+.nutrition-mini-card:hover {
+  border-color: var(--n-color, var(--glass-border));
+  transform: translateY(-2px);
+}
+
+.n-value {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--n-color, var(--text-primary));
+}
+
+.n-unit {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin-bottom: 0.2rem;
+}
+
+.n-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* Sections */
+.detail-section {
+  margin-bottom: 2rem;
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+.detail-section h2 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Ingredients — teal/terracotta chips */
+.ingredients-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ingredient-chip-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+
+.ingredient-chip-row.have {
+  background: rgba(0, 200, 150, 0.06);
+  border: 1px solid rgba(0, 200, 150, 0.15);
+}
+
+.ingredient-chip-row.missing {
+  background: rgba(196, 98, 45, 0.06);
+  border: 1px solid rgba(196, 98, 45, 0.15);
+}
+
+.ing-badge {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ing-badge.have {
+  background: rgba(0, 200, 150, 0.2);
+  color: var(--accent);
+}
+
+.ing-badge.missing {
+  background: rgba(196, 98, 45, 0.2);
+  color: var(--terracotta);
+}
+
+.ing-text {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+/* Steps */
+.steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.step-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+}
+
+.step-number {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.step-content p {
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: var(--text-primary);
+}
+
+.step-equipment {
+  display: flex;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.equip-tag {
+  font-size: 0.7rem;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: rgba(124, 58, 237, 0.1);
+  color: var(--accent-secondary);
+  font-weight: 500;
+}
+
+/* Missing Section */
+.missing-section {
+  border-color: rgba(196, 98, 45, 0.2) !important;
+}
+
+.missing-section h2 svg { color: var(--terracotta); }
+
+.missing-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.missing-chip {
+  padding: 0.35rem 0.85rem;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  background: rgba(196, 98, 45, 0.12);
+  border: 1px solid rgba(196, 98, 45, 0.25);
+  color: var(--terracotta);
+}
+
+.btn-primary.added {
+  background: rgba(0, 200, 150, 0.15);
+  color: var(--accent);
+  box-shadow: none;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+  .detail-hero-img { height: 250px; }
+  .detail-title { font-size: 1.5rem; }
+  .detail-actions { flex-wrap: wrap; }
+  .nutrition-row { grid-template-columns: repeat(2, 1fr); }
+}

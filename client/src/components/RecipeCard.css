@@ -1,0 +1,233 @@
+.recipe-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: cardReveal 0.5s ease forwards;
+  opacity: 0;
+  transform: translateY(20px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+@keyframes cardReveal {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.recipe-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(0, 200, 150, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 200, 150, 0.08), 0 0 40px rgba(0, 200, 150, 0.04);
+}
+
+/* ---- Image Area ---- */
+.recipe-card-img-wrap {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+}
+
+.recipe-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.recipe-card:hover .recipe-card-img {
+  transform: scale(1.06);
+}
+
+.recipe-card-img-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+}
+
+/* Match Badge (top-left) */
+.match-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: white;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* Difficulty Badge (bottom-left) */
+.difficulty-badge {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  backdrop-filter: blur(8px);
+}
+
+.diff-easy {
+  background: rgba(0, 200, 150, 0.2);
+  color: var(--accent);
+  border: 1px solid rgba(0, 200, 150, 0.3);
+}
+
+.diff-medium {
+  background: rgba(240, 165, 0, 0.2);
+  color: #f0a500;
+  border: 1px solid rgba(240, 165, 0, 0.3);
+}
+
+.diff-hard {
+  background: rgba(196, 98, 45, 0.2);
+  color: var(--terracotta);
+  border: 1px solid rgba(196, 98, 45, 0.3);
+}
+
+/* Veg / Non-Veg Indicator */
+.veg-indicator {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.veg-indicator.veg {
+  border: 2px solid #00C896;
+}
+
+.veg-indicator.non-veg {
+  border: 2px solid #C4622D;
+}
+
+.veg-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.veg-indicator.veg .veg-dot {
+  background: #00C896;
+}
+
+.veg-indicator.non-veg .veg-dot {
+  background: #C4622D;
+}
+
+/* Bookmark Button (top-right) */
+.bookmark-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.bookmark-btn:hover {
+  background: rgba(0, 0, 0, 0.7);
+  transform: scale(1.1);
+}
+
+.bookmark-btn.saved {
+  background: rgba(255, 107, 107, 0.2);
+}
+
+/* ---- Card Body ---- */
+.recipe-card-body {
+  padding: 1rem 1.15rem 1.15rem;
+}
+
+.recipe-card-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.recipe-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.meta-veg {
+  color: var(--accent);
+}
+
+.recipe-card-tags {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.4rem;
+}
+
+.tag {
+  font-size: 0.68rem;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.tag-vegan {
+  background: rgba(0, 200, 150, 0.12);
+  color: var(--accent);
+}
+
+.tag-gf {
+  background: rgba(124, 58, 237, 0.12);
+  color: var(--accent-secondary);
+}
+
+.tag-df {
+  background: rgba(196, 98, 45, 0.12);
+  color: var(--terracotta);
+}
+
+.missing-count {
+  font-size: 0.75rem;
+  color: var(--terracotta);
+  margin-top: 0.2rem;
+  opacity: 0.9;
+}
