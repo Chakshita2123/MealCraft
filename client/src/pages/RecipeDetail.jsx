@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 import {
   Clock, Users, Flame, Heart, ShoppingCart, ArrowLeft, ArrowRight,
-  Check, X, Leaf, WheatOff, Share2, Minus, Plus
+  Check, X, Leaf, WheatOff, Share2, Minus, Plus, AlertCircle
 } from 'lucide-react';
 import './RecipeDetail.css';
 
@@ -16,29 +16,38 @@ export default function RecipeDetail() {
   const { user } = useAuth();
   const [recipe, setRecipe] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [isSaved, setIsSaved] = useState(false);
   const [addingToList, setAddingToList] = useState(false);
   const [addedToList, setAddedToList] = useState(false);
   const [servings, setServings] = useState(0);
+  const [saving, setSaving] = useState(false);
 
   const userIngredients = searchParams.get('ingredients') || '';
 
   useEffect(() => {
     const loadRecipe = async () => {
+      setLoading(true);
+      setError('');
       try {
         const res = await recipesAPI.getById(id, userIngredients);
         setRecipe(res.data.recipe);
         setServings(res.data.recipe.servings || 2);
 
         if (user) {
-          const savedRes = await recipesAPI.getSaved();
-          const saved = (savedRes.data.savedRecipes || []).some(
-            r => r.spoonacularId === parseInt(id)
-          );
-          setIsSaved(saved);
+          try {
+            const savedRes = await recipesAPI.getSaved();
+            const saved = (savedRes.data.savedRecipes || []).some(
+              r => r.spoonacularId === parseInt(id)
+            );
+            setIsSaved(saved);
+          } catch {}
         }
       } catch (err) {
         console.error('Failed to load recipe:', err);
+        setError(
+          err.response?.data?.message || 'Failed to load recipe details. Please try again.'
+        );
       } finally {
         setLoading(false);
       }
@@ -48,6 +57,7 @@ export default function RecipeDetail() {
 
   const handleSave = async () => {
     if (!user) return navigate('/login');
+    setSaving(true);
     try {
       if (isSaved) {
         await recipesAPI.unsave(recipe.id);
@@ -65,6 +75,8 @@ export default function RecipeDetail() {
       }
     } catch (err) {
       console.error('Save/unsave error:', err);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -111,6 +123,25 @@ export default function RecipeDetail() {
     return (
       <div className="recipe-detail-page">
         <LoadingSpinner text="Loading recipe..." />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="recipe-detail-page">
+        <div className="detail-error-state">
+          <AlertCircle size={56} strokeWidth={1.2} />
+          <h3>Failed to load recipe</h3>
+          <p>{error}</p>
+          <div className="detail-error-actions">
+            <button className="btn-primary" onClick={() => window.location.reload()}>Try Again</button>
+            <button className="btn-outline" onClick={() => navigate(-1)}>
+              <ArrowLeft size={16} />
+              Go Back
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -168,9 +199,13 @@ export default function RecipeDetail() {
 
         {/* Action Buttons */}
         <div className="detail-actions">
-          <button className={`action-btn ${isSaved ? 'saved' : ''}`} onClick={handleSave}>
+          <button
+            className={`action-btn ${isSaved ? 'saved' : ''}`}
+            onClick={handleSave}
+            disabled={saving}
+          >
             <Heart size={18} fill={isSaved ? '#ff6b6b' : 'none'} color={isSaved ? '#ff6b6b' : 'currentColor'} />
-            {isSaved ? 'Saved' : 'Save'}
+            {saving ? '...' : isSaved ? 'Saved' : 'Save'}
           </button>
           <button className="action-btn" onClick={handleShare}>
             <Share2 size={18} />
@@ -250,6 +285,17 @@ export default function RecipeDetail() {
                 </div>
               ))}
             </div>
+          </section>
+        )}
+
+        {/* No Instructions Fallback */}
+        {(!recipe.steps || recipe.steps.length === 0) && recipe.summary && (
+          <section className="detail-section">
+            <h2>About This Recipe</h2>
+            <div
+              className="recipe-summary"
+              dangerouslySetInnerHTML={{ __html: recipe.summary }}
+            />
           </section>
         )}
 

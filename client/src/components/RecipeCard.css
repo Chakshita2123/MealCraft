@@ -1,6 +1,6 @@
 .recipe-card {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  background: #FFFFFF;
+  border: 1px solid rgba(196, 98, 45, 0.1);
   border-radius: var(--radius-lg);
   overflow: hidden;
   cursor: pointer;
@@ -8,8 +8,7 @@
   animation: cardReveal 0.5s ease forwards;
   opacity: 0;
   transform: translateY(20px);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 2px 16px rgba(196, 98, 45, 0.07);
 }
 
 @keyframes cardReveal {
@@ -18,8 +17,8 @@
 
 .recipe-card:hover {
   transform: translateY(-6px);
-  border-color: rgba(0, 200, 150, 0.3);
-  box-shadow: 0 20px 60px rgba(0, 200, 150, 0.08), 0 0 40px rgba(0, 200, 150, 0.04);
+  border-color: rgba(196, 98, 45, 0.25);
+  box-shadow: 0 8px 32px rgba(196, 98, 45, 0.13);
 }
 
 /* ---- Image Area ---- */
@@ -61,7 +60,7 @@
   font-weight: 700;
   color: white;
   letter-spacing: 0.02em;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
 /* Difficulty Badge (bottom-left) */
@@ -75,24 +74,23 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  backdrop-filter: blur(8px);
 }
 
 .diff-easy {
-  background: rgba(0, 200, 150, 0.2);
-  color: var(--accent);
-  border: 1px solid rgba(0, 200, 150, 0.3);
+  background: rgba(122, 158, 95, 0.15);
+  color: var(--success);
+  border: 1px solid rgba(122, 158, 95, 0.3);
 }
 
 .diff-medium {
-  background: rgba(240, 165, 0, 0.2);
-  color: #f0a500;
-  border: 1px solid rgba(240, 165, 0, 0.3);
+  background: rgba(212, 149, 106, 0.15);
+  color: #D4956A;
+  border: 1px solid rgba(212, 149, 106, 0.3);
 }
 
 .diff-hard {
-  background: rgba(196, 98, 45, 0.2);
-  color: var(--terracotta);
+  background: rgba(196, 98, 45, 0.15);
+  color: var(--primary);
   border: 1px solid rgba(196, 98, 45, 0.3);
 }
 
@@ -110,7 +108,7 @@
 }
 
 .veg-indicator.veg {
-  border: 2px solid #00C896;
+  border: 2px solid #7A9E5F;
 }
 
 .veg-indicator.non-veg {
@@ -124,7 +122,7 @@
 }
 
 .veg-indicator.veg .veg-dot {
-  background: #00C896;
+  background: #7A9E5F;
 }
 
 .veg-indicator.non-veg .veg-dot {
@@ -140,22 +138,23 @@
   height: 34px;
   border-radius: 50%;
   border: none;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.25s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .bookmark-btn:hover {
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(255, 255, 255, 1);
   transform: scale(1.1);
 }
 
 .bookmark-btn.saved {
-  background: rgba(255, 107, 107, 0.2);
+  background: rgba(255, 107, 107, 0.15);
 }
 
 /* ---- Card Body ---- */
@@ -164,7 +163,7 @@
 }
 
 .recipe-card-title {
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Playfair Display', serif;
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -192,7 +191,7 @@
 }
 
 .meta-veg {
-  color: var(--accent);
+  color: var(--success);
 }
 
 .recipe-card-tags {
@@ -211,23 +210,23 @@
 }
 
 .tag-vegan {
-  background: rgba(0, 200, 150, 0.12);
-  color: var(--accent);
+  background: rgba(122, 158, 95, 0.12);
+  color: var(--success);
 }
 
 .tag-gf {
-  background: rgba(124, 58, 237, 0.12);
-  color: var(--accent-secondary);
+  background: rgba(139, 115, 85, 0.12);
+  color: var(--secondary);
 }
 
 .tag-df {
   background: rgba(196, 98, 45, 0.12);
-  color: var(--terracotta);
+  color: var(--primary);
 }
 
 .missing-count {
   font-size: 0.75rem;
-  color: var(--terracotta);
+  color: var(--primary);
   margin-top: 0.2rem;
   opacity: 0.9;
 }

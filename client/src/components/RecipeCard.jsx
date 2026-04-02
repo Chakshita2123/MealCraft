@@ -5,9 +5,9 @@ import './RecipeCard.css';
 export default function RecipeCard({ recipe, onSave, onUnsave, isSaved, userIngredients }) {
   const navigate = useNavigate();
 
-  const matchColor = recipe.matchPercentage >= 80 ? 'var(--accent)' :
-                     recipe.matchPercentage >= 50 ? 'var(--accent-secondary)' :
-                     'var(--terracotta)';
+  const matchColor = recipe.matchPercentage >= 80 ? '#C4622D' :
+                     recipe.matchPercentage >= 50 ? '#D4956A' :
+                     '#A08060';
 
   const handleClick = () => {
     const params = userIngredients ? `?ingredients=${encodeURIComponent(userIngredients)}` : '';

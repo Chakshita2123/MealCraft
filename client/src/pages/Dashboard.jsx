@@ -63,9 +63,9 @@ export default function Dashboard() {
   };
 
   const quickActions = [
-    { to: '/scan', icon: <Camera size={28} />, label: 'Scan Fridge', desc: 'Identify ingredients with AI', color: '#00C896' },
-    { to: '/search', icon: <Search size={28} />, label: 'Find Recipes', desc: 'Search by ingredients', color: '#7C3AED' },
-    { to: '/shopping', icon: <ShoppingCart size={28} />, label: 'Shopping List', desc: 'Manage your list', color: '#C4622D' },
+    { to: '/scan', icon: <Camera size={28} />, label: 'Scan Fridge', desc: 'Identify ingredients with AI', color: '#C4622D' },
+    { to: '/search', icon: <Search size={28} />, label: 'Find Recipes', desc: 'Search by ingredients', color: '#8B7355' },
+    { to: '/shopping', icon: <ShoppingCart size={28} />, label: 'Shopping List', desc: 'Manage your list', color: '#D4956A' },
   ];
 
   return (

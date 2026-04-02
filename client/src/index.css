@@ -1,35 +1,43 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700;800&display=swap');
 
-/* ====== Design Tokens ====== */
+/* ====== Design Tokens — Terracotta + Cream ====== */
 :root {
-  /* Backgrounds — warm dark */
-  --bg-primary: #0a0a0a;
-  --bg-secondary: #141010;
-  --bg-tertiary: #1a1414;
-
-  /* Accent Colors */
-  --accent: #00C896;
-  --accent-hover: #00dba5;
-  --accent-secondary: #7C3AED;
-  --accent-secondary-hover: #8b4ffc;
+  /* Primary */
+  --primary: #C4622D;
+  --primary-light: #E8956D;
+  --primary-dark: #A8522A;
+  --secondary: #8B7355;
+  --accent: #C4622D;
+  --accent-hover: #A8522A;
+  --accent-secondary: #D4956A;
+  --accent-secondary-hover: #c78555;
   --terracotta: #C4622D;
-  --terracotta-hover: #d97340;
+  --terracotta-hover: #A8522A;
+
+  /* Backgrounds */
+  --bg-primary: #FDF8F3;
+  --bg-secondary: #F9F2EA;
+  --bg-tertiary: #F2E8DA;
+  --background: #FDF8F3;
+  --surface: #FFFFFF;
+  --surface-secondary: #F9F2EA;
+  --surface-tertiary: #F2E8DA;
 
   /* Text */
-  --text-primary: #f0f2f5;
-  --text-secondary: #a0a8b8;
-  --text-muted: #5c6478;
+  --text-primary: #2C1810;
+  --text-secondary: #6B4C35;
+  --text-muted: #A08060;
 
-  /* Glassmorphism */
-  --glass-bg: rgba(255, 255, 255, 0.04);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-hover: rgba(255, 255, 255, 0.07);
+  /* Card / Glass → warm white */
+  --glass-bg: #FFFFFF;
+  --glass-border: rgba(196, 98, 45, 0.1);
+  --glass-hover: rgba(196, 98, 45, 0.06);
 
   /* Semantic Colors */
-  --success: #00C896;
-  --warning: #f0a500;
+  --success: #7A9E5F;
+  --warning: #D4956A;
   --danger: #C4622D;
-  --info: #7C3AED;
+  --info: #8B7355;
 
   /* Radius */
   --radius-sm: 8px;
@@ -55,16 +63,8 @@ html {
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #0a0a0a;
-  background-image:
-    radial-gradient(ellipse at 20% 20%,
-      rgba(0, 200, 150, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 80%,
-      rgba(124, 58, 237, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%,
-      rgba(196, 98, 45, 0.04) 0%, transparent 70%);
-  background-attachment: fixed;
+  font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.6;
   min-height: 100vh;
@@ -72,7 +72,7 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Playfair Display', serif;
   line-height: 1.2;
 }
 
@@ -97,8 +97,8 @@ button, input, select, textarea {
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
   border-radius: var(--radius-md);
-  background: var(--accent);
-  color: var(--bg-primary);
+  background: var(--primary);
+  color: white;
   font-weight: 600;
   font-size: 0.95rem;
   border: none;
@@ -108,9 +108,9 @@ button, input, select, textarea {
 }
 
 .btn-primary:hover {
-  background: var(--accent-hover);
+  background: var(--primary-dark);
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 200, 150, 0.25);
+  box-shadow: 0 8px 30px rgba(196, 98, 45, 0.25);
 }
 
 .btn-primary:active {
@@ -134,16 +134,16 @@ button, input, select, textarea {
   color: var(--text-primary);
   font-weight: 600;
   font-size: 0.95rem;
-  border: 1px solid var(--glass-border);
+  border: 1px solid rgba(196, 98, 45, 0.25);
   cursor: pointer;
   transition: all 0.3s ease;
   text-decoration: none;
 }
 
 .btn-outline:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: rgba(0, 200, 150, 0.05);
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(196, 98, 45, 0.05);
 }
 
 .btn-secondary {
@@ -152,7 +152,7 @@ button, input, select, textarea {
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
   border-radius: var(--radius-md);
-  background: var(--accent-secondary);
+  background: var(--secondary);
   color: white;
   font-weight: 600;
   font-size: 0.95rem;
@@ -163,9 +163,9 @@ button, input, select, textarea {
 }
 
 .btn-secondary:hover {
-  background: var(--accent-secondary-hover);
+  background: #7a6347;
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(124, 58, 237, 0.25);
+  box-shadow: 0 8px 30px rgba(139, 115, 85, 0.25);
 }
 
 .btn-lg {
@@ -193,8 +193,8 @@ button, input, select, textarea {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 3px solid rgba(255, 255, 255, 0.05);
-  border-top-color: var(--accent);
+  border: 3px solid rgba(196, 98, 45, 0.12);
+  border-top-color: var(--primary);
   animation: spin 0.8s linear infinite;
 }
 
@@ -233,32 +233,23 @@ button, input, select, textarea {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(196, 98, 45, 0.18);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(196, 98, 45, 0.3);
 }
 
 /* ====== Selection ====== */
 ::selection {
-  background: rgba(0, 200, 150, 0.3);
-  color: white;
-}
-
-/* ====== Global Card Glassmorphism ====== */
-.card,
-[class*="card"],
-[class*="Card"] {
-  background: rgba(255, 255, 255, 0.04) !important;
-  backdrop-filter: blur(12px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(196, 98, 45, 0.2);
+  color: var(--text-primary);
 }
 
 /* ====== Focus Visible ====== */
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 

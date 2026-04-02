@@ -23,11 +23,23 @@ export const authAPI = {
 
 // Recipes API
 export const recipesAPI = {
+  // POST /api/recipes/find — primary ingredient-based search
+  find: (ingredients) => api.post('/recipes/find', { ingredients }),
+
+  // GET /api/recipes/search — filtered search with cuisine/diet
   search: (params) => api.get('/recipes/search', { params }),
+
+  // GET /api/recipes/:id — recipe detail
   getById: (id, userIngredients) =>
     api.get(`/recipes/${id}`, { params: { userIngredients } }),
+
+  // POST /api/recipes/save — bookmark a recipe
   save: (recipe) => api.post('/recipes/save', { recipe }),
+
+  // DELETE /api/recipes/unsave/:spoonacularId — remove bookmark
   unsave: (spoonacularId) => api.delete(`/recipes/unsave/${spoonacularId}`),
+
+  // GET /api/recipes/saved/all — get all saved recipes
   getSaved: () => api.get('/recipes/saved/all'),
 };
 

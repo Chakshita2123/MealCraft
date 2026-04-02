@@ -3,23 +3,29 @@ import { Link } from 'react-router-dom';
 import { recipesAPI } from '../api';
 import RecipeCard from '../components/RecipeCard';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { Heart, Camera, ChefHat } from 'lucide-react';
+import { Heart, Camera, ChefHat, AlertCircle } from 'lucide-react';
 import './SavedRecipes.css';
 
 export default function SavedRecipes() {
   const [savedRecipes, setSavedRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     loadSaved();
   }, []);
 
   const loadSaved = async () => {
+    setLoading(true);
+    setError('');
     try {
       const res = await recipesAPI.getSaved();
       setSavedRecipes(res.data.savedRecipes || []);
     } catch (err) {
       console.error('Failed to load saved recipes:', err);
+      setError(
+        err.response?.data?.message || 'Failed to load saved recipes. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
@@ -52,7 +58,14 @@ export default function SavedRecipes() {
         <p>{savedRecipes.length} recipe{savedRecipes.length !== 1 ? 's' : ''} saved</p>
       </div>
 
-      {savedRecipes.length === 0 ? (
+      {error ? (
+        <div className="saved-error">
+          <AlertCircle size={48} strokeWidth={1.2} />
+          <h3>Something went wrong</h3>
+          <p>{error}</p>
+          <button className="btn-primary" onClick={loadSaved}>Try Again</button>
+        </div>
+      ) : savedRecipes.length === 0 ? (
         <div className="saved-empty">
           <div className="empty-illustration">
             <ChefHat size={64} strokeWidth={1} />

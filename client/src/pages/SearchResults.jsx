@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { recipesAPI } from '../api';
 import { useAuth } from '../context/AuthContext';
 import RecipeCard from '../components/RecipeCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import IngredientChip from '../components/IngredientChip';
-import { Search, SlidersHorizontal, ChefHat } from 'lucide-react';
+import { Search, SlidersHorizontal, ChefHat, AlertCircle, ArrowLeft } from 'lucide-react';
 import './SearchResults.css';
 
 const SORT_OPTIONS = [
@@ -22,6 +22,7 @@ export default function SearchResults() {
   const [savedIds, setSavedIds] = useState(new Set());
   const [searched, setSearched] = useState(false);
   const [sortBy, setSortBy] = useState('match');
+  const [error, setError] = useState('');
 
   const ingredientsParam = searchParams.get('ingredients') || '';
   const cuisineParam = searchParams.get('cuisine') || '';
@@ -49,6 +50,7 @@ export default function SearchResults() {
     if (ingredientList.length === 0) return;
     setLoading(true);
     setSearched(true);
+    setError('');
     try {
       const res = await recipesAPI.search({
         ingredients: ingredientsParam,
@@ -59,6 +61,9 @@ export default function SearchResults() {
       setRecipes(res.data.recipes || []);
     } catch (err) {
       console.error('Search error:', err);
+      setError(
+        err.response?.data?.message || 'Failed to search recipes. Please check your connection and try again.'
+      );
     } finally {
       setLoading(false);
     }
@@ -138,6 +143,19 @@ export default function SearchResults() {
       {/* Results */}
       {loading ? (
         <LoadingSpinner text="Finding the best recipes..." />
+      ) : error ? (
+        <div className="error-state">
+          <AlertCircle size={56} strokeWidth={1.2} />
+          <h3>Something went wrong</h3>
+          <p>{error}</p>
+          <div className="error-actions">
+            <button className="btn-primary" onClick={searchRecipes}>Try Again</button>
+            <Link to="/scan" className="btn-outline">
+              <ArrowLeft size={16} />
+              Back to Scan
+            </Link>
+          </div>
+        </div>
       ) : sortedRecipes.length > 0 ? (
         <div className="results-grid">
           {sortedRecipes.map((recipe) => (
@@ -156,12 +174,19 @@ export default function SearchResults() {
           <ChefHat size={56} />
           <h3>No recipes found</h3>
           <p>Try different ingredients or adjust your filters.</p>
+          <Link to="/scan" className="btn-primary" style={{ marginTop: '1rem' }}>
+            <ArrowLeft size={16} />
+            Back to Scan
+          </Link>
         </div>
       ) : (
         <div className="empty-state">
           <Search size={56} />
           <h3>Search for recipes</h3>
           <p>Go to the Scan page to detect ingredients from a photo, then come back here.</p>
+          <Link to="/scan" className="btn-primary" style={{ marginTop: '1rem' }}>
+            Scan Your Fridge
+          </Link>
         </div>
       )}
     </div>

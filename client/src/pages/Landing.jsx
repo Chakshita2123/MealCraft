@@ -7,25 +7,25 @@ const features = [
     icon: <Camera size={32} />,
     title: 'Scan Your Fridge',
     desc: 'Take a photo and let AI identify every ingredient instantly.',
-    color: '#00C896',
+    color: '#C4622D',
   },
   {
     icon: <Search size={32} />,
     title: 'Smart Recipe Match',
     desc: 'Find recipes ranked by how many ingredients you already have.',
-    color: '#7C3AED',
+    color: '#8B7355',
   },
   {
     icon: <ChefHat size={32} />,
     title: 'Step-by-Step Cooking',
     desc: 'Follow detailed instructions with nutrition breakdowns.',
-    color: '#C4622D',
+    color: '#D4956A',
   },
   {
     icon: <ShoppingCart size={32} />,
     title: 'Auto Shopping Lists',
     desc: 'Missing ingredients? Add them to your list in one click.',
-    color: '#00C896',
+    color: '#C4622D',
   },
 ];
 
@@ -68,17 +68,17 @@ export default function Landing() {
 
         <div className="hero-visual">
           <div className="hero-card hero-card-1">
-            <div className="mini-badge" style={{ background: 'rgba(0, 200, 150, 0.15)', color: '#00C896' }}>92% match</div>
+            <div className="mini-badge" style={{ background: 'rgba(196, 98, 45, 0.12)', color: '#C4622D' }}>92% match</div>
             <div className="mini-title">Tomato Basil Pasta</div>
             <div className="mini-meta">25 min · 4 servings</div>
           </div>
           <div className="hero-card hero-card-2">
-            <div className="mini-badge" style={{ background: 'rgba(124, 58, 237, 0.15)', color: '#7C3AED' }}>76% match</div>
+            <div className="mini-badge" style={{ background: 'rgba(212, 149, 106, 0.15)', color: '#8B7355' }}>76% match</div>
             <div className="mini-title">Chicken Stir Fry</div>
             <div className="mini-meta">30 min · 2 servings</div>
           </div>
           <div className="hero-card hero-card-3">
-            <div className="mini-badge" style={{ background: 'rgba(196, 98, 45, 0.15)', color: '#C4622D' }}>88% match</div>
+            <div className="mini-badge" style={{ background: 'rgba(160, 128, 96, 0.12)', color: '#A08060' }}>88% match</div>
             <div className="mini-title">Greek Salad Bowl</div>
             <div className="mini-meta">15 min · 2 servings</div>
           </div>

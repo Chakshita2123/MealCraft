@@ -4,9 +4,9 @@
   gap: 6px;
   padding: 6px 14px;
   border-radius: 24px;
-  background: rgba(0, 200, 150, 0.1);
-  border: 1px solid rgba(0, 200, 150, 0.22);
-  color: var(--accent);
+  background: #F2E8DA;
+  border: 1px solid rgba(196, 98, 45, 0.15);
+  color: #6B4C35;
   font-size: 0.85rem;
   font-weight: 500;
   animation: chipSlideIn 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
@@ -27,7 +27,7 @@
   justify-content: center;
   background: none;
   border: none;
-  color: var(--accent);
+  color: #6B4C35;
   cursor: pointer;
   padding: 2px;
   border-radius: 50%;
@@ -37,5 +37,5 @@
 
 .chip-remove:hover {
   opacity: 1;
-  background: rgba(0, 200, 150, 0.2);
+  background: rgba(196, 98, 45, 0.12);
 }
