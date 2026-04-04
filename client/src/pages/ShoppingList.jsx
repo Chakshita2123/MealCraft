@@ -122,6 +122,24 @@ export default function ShoppingList() {
         </div>
       )}
 
+      {/* Stats Row */}
+      {totalCount > 0 && (
+        <div className="shopping-stats">
+          <div className="stat-mini">
+            <div className="stat-num">{totalCount}</div>
+            <div className="stat-label">Total</div>
+          </div>
+          <div className="stat-mini">
+            <div className="stat-num">{purchasedCount}</div>
+            <div className="stat-label">Done</div>
+          </div>
+          <div className="stat-mini">
+            <div className="stat-num">{totalCount - purchasedCount}</div>
+            <div className="stat-label">Remaining</div>
+          </div>
+        </div>
+      )}
+
       {totalCount === 0 ? (
         <div className="shopping-empty">
           <Package size={60} strokeWidth={1} />

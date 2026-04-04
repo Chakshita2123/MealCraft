@@ -26,25 +26,29 @@ export default function SearchResults() {
 
   const ingredientsParam = searchParams.get('ingredients') || '';
   const cuisineParam = searchParams.get('cuisine') || '';
-  const dietParam = searchParams.get('diet') || '';
-  const ingredientList = ingredientsParam ? ingredientsParam.split(',').map(i => i.trim()) : [];
+  // ← Fixed: read 'vegetarian' param, not 'diet'
+  const vegetarianParam = searchParams.get('vegetarian') || '';
+  const ingredientList = ingredientsParam
+    ? ingredientsParam.split(',').map(i => i.trim())
+    : [];
 
   // Load saved recipe IDs
   useEffect(() => {
     if (user) {
       recipesAPI.getSaved().then(res => {
-        const ids = new Set((res.data.savedRecipes || []).map(r => r.spoonacularId));
+        // ← Fixed: use 'id' not 'spoonacularId'
+        const ids = new Set((res.data.savedRecipes || []).map(r => r.id));
         setSavedIds(ids);
-      }).catch(() => {});
+      }).catch(() => { });
     }
   }, [user]);
 
-  // Search on mount
+  // Search on mount / param change
   useEffect(() => {
     if (ingredientList.length > 0) {
       searchRecipes();
     }
-  }, [ingredientsParam, cuisineParam, dietParam]);
+  }, [ingredientsParam, cuisineParam, vegetarianParam]);
 
   const searchRecipes = async () => {
     if (ingredientList.length === 0) return;
@@ -52,13 +56,41 @@ export default function SearchResults() {
     setSearched(true);
     setError('');
     try {
+      // ← Fixed: send 'vegetarian' param, not 'diet'
       const res = await recipesAPI.search({
         ingredients: ingredientsParam,
         cuisine: cuisineParam,
-        diet: dietParam,
+        vegetarian: vegetarianParam,
         number: 24,
       });
-      setRecipes(res.data.recipes || []);
+
+      let results = res.data.recipes || [];
+
+      // ← Fix: if no vegetarian filter, mix veg + non-veg
+      // Ensure at least 30% veg recipes in default results
+      if (!vegetarianParam || vegetarianParam !== 'true') {
+        const vegRecipes = results.filter(r => r.vegetarian);
+        const nonVegRecipes = results.filter(r => !r.vegetarian);
+
+        // If all non-veg, try to add some veg ones from existing
+        if (vegRecipes.length === 0 && nonVegRecipes.length > 0) {
+          // Take 70% non-veg, 30% slots for veg (from what we have)
+          // Since MealDB doesn't always return veg, we just shuffle to mix
+          results = results.sort(() => Math.random() - 0.5);
+        } else {
+          // Interleave veg and non-veg for a good mix
+          const mixed = [];
+          const maxLen = Math.max(vegRecipes.length, nonVegRecipes.length);
+          for (let i = 0; i < maxLen; i++) {
+            if (nonVegRecipes[i]) mixed.push(nonVegRecipes[i]);
+            if (nonVegRecipes[i + 1]) mixed.push(nonVegRecipes[i + 1]);
+            if (vegRecipes[i]) mixed.push(vegRecipes[i]);
+          }
+          results = mixed;
+        }
+      }
+
+      setRecipes(results);
     } catch (err) {
       console.error('Search error:', err);
       setError(
@@ -73,7 +105,7 @@ export default function SearchResults() {
     if (!user) return;
     try {
       await recipesAPI.save({
-        spoonacularId: recipe.id,
+        id: recipe.id, // ← Fixed: use 'id' not 'spoonacularId'
         title: recipe.title,
         image: recipe.image,
         readyInMinutes: recipe.readyInMinutes,
@@ -110,6 +142,21 @@ export default function SearchResults() {
         <h1>
           <Search size={28} />
           Recipes for you
+          {/* ← Show veg indicator if filter is on */}
+          {vegetarianParam === 'true' && (
+            <span style={{
+              fontSize: '0.82rem',
+              background: 'rgba(90, 138, 42, 0.2)',
+              color: '#C8F0A0',
+              padding: '4px 12px',
+              borderRadius: '999px',
+              marginLeft: '8px',
+              fontWeight: 600,
+              letterSpacing: '0.3px',
+            }}>
+              🌿 Vegetarian
+            </span>
+          )}
         </h1>
         {ingredientList.length > 0 && (
           <div className="search-ingredients">
@@ -191,4 +238,4 @@ export default function SearchResults() {
       )}
     </div>
   );
-}
+} 

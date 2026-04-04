@@ -1,17 +1,168 @@
 const express = require('express');
 const axios = require('axios');
-const { auth, optionalAuth } = require('../middleware/auth');
+const { auth } = require('../middleware/auth');
 const User = require('../models/User');
 
 const router = express.Router();
 
-const SPOONACULAR_BASE = 'https://api.spoonacular.com';
+const MEALDB_BASE = 'https://www.themealdb.com/api/json/v1/1';
 
 // =========================================================
-// IMPORTANT: Static routes MUST come before :id catch-all
+// HELPER: Estimate cook time from instructions length
+// =========================================================
+const estimateCookTime = (instructions = '') => {
+  // Try to find time mentions like "30 minutes", "1 hour"
+  const minMatch = instructions.match(/(\d+)\s*(?:to\s*\d+\s*)?minutes?/i);
+  const hrMatch = instructions.match(/(\d+)\s*(?:to\s*\d+\s*)?hours?/i);
+
+  if (hrMatch) return parseInt(hrMatch[1]) * 60;
+  if (minMatch) return parseInt(minMatch[1]);
+  return null; // unknown
+};
+
+const getDifficulty = (minutes) => {
+  if (!minutes) return null;
+  if (minutes <= 20) return 'Easy';
+  if (minutes <= 45) return 'Medium';
+  return 'Hard';
+};
+
+// =========================================================
+// HELPER: Convert MealDB meal to our format
+// =========================================================
+const formatMeal = (meal, userIngredients = []) => {
+  const ingredients = [];
+
+  for (let i = 1; i <= 20; i++) {
+    const name = meal[`strIngredient${i}`];
+    const measure = meal[`strMeasure${i}`];
+
+    if (name && name.trim()) {
+      const ingName = name.toLowerCase().trim();
+      const measureClean = measure?.trim() || '';
+
+      const have = userIngredients.some(ui => {
+        const uiLower = ui.toLowerCase().trim();
+        return ingName.includes(uiLower) || uiLower.includes(ingName);
+      });
+
+      ingredients.push({
+        id: i,
+        name: name.trim(),
+        // FIX: amount is the full measure string (e.g. "2 tbsp"), not a number
+        // Kept as string to avoid NaN on frontend
+        amount: measureClean,
+        original: measureClean ? `${measureClean} ${name.trim()}` : name.trim(),
+        unit: '',
+        aisle: 'Other',
+        have
+      });
+    }
+  }
+
+  const usedCount = ingredients.filter(i => i.have).length;
+  const missedCount = ingredients.filter(i => !i.have).length;
+  const total = usedCount + missedCount;
+
+  const isVegetarian =
+    meal.strCategory === 'Vegetarian' ||
+    meal.strCategory === 'Vegan' ||
+    (meal.strTags?.toLowerCase().includes('vegetarian')) ||
+    (meal.strTags?.toLowerCase().includes('vegan'));
+
+  const cookTime = estimateCookTime(meal.strInstructions);
+
+  // Parse steps — handle both \r\n and \n, and skip blank/numbering-only lines
+  const steps = meal.strInstructions
+    ? meal.strInstructions
+      .split(/\r?\n/)
+      .map(s => s.trim())
+      .filter(s => s.length > 3 && !/^\d+\.?$/.test(s)) // skip "1." "2" etc
+      .map((step, idx) => ({
+        number: idx + 1,
+        step
+      }))
+    : [];
+
+  return {
+    id: meal.idMeal,
+    title: meal.strMeal,
+    image: meal.strMealThumb,
+    category: meal.strCategory || null,
+    area: meal.strArea || null,
+    tags: meal.strTags ? meal.strTags.split(',').map(t => t.trim()).filter(Boolean) : [],
+    vegetarian: isVegetarian,
+    // FIX: null instead of hardcoded 30 — frontend should show "N/A" if null
+    readyInMinutes: cookTime,
+    servings: 4,
+    matchPercentage: total > 0 ? Math.round((usedCount / total) * 100) : 0,
+    usedIngredientCount: usedCount,
+    missedIngredientCount: missedCount,
+    ingredients,
+    missedIngredients: ingredients.filter(i => !i.have),
+    // FIX: null instead of hardcoded "Medium"
+    difficulty: getDifficulty(cookTime),
+    steps,
+    sourceUrl: meal.strSource || null,
+    youtubeUrl: meal.strYoutube || null
+  };
+};
+
+// =========================================================
+// HELPER: Fetch & deduplicate meals by ingredient list
+// Max ingredients to search: raised from 5 → 8
+// =========================================================
+const fetchMealsByIngredients = async (ingredientList, limit = 8) => {
+  const mealMap = {};
+
+  await Promise.all(
+    ingredientList.slice(0, limit).map(async (ingredient) => {
+      try {
+        const response = await axios.get(`${MEALDB_BASE}/filter.php`, {
+          params: { i: ingredient },
+          timeout: 5000
+        });
+        const meals = response.data?.meals || [];
+        meals.forEach(meal => {
+          // idMeal as key = automatic deduplication
+          if (!mealMap[meal.idMeal]) mealMap[meal.idMeal] = meal;
+        });
+      } catch (e) {
+        console.warn(`Ingredient search failed for "${ingredient}":`, e.message);
+      }
+    })
+  );
+
+  return mealMap;
+};
+
+// =========================================================
+// HELPER: Fetch detailed meals from id list
+// =========================================================
+const fetchDetailedMeals = async (mealIds, userIngredients, fetchLimit = 24) => {
+  const results = await Promise.all(
+    mealIds.slice(0, fetchLimit).map(async (id) => {
+      try {
+        const res = await axios.get(`${MEALDB_BASE}/lookup.php`, {
+          params: { i: id },
+          timeout: 5000
+        });
+        const meal = res.data?.meals?.[0];
+        if (!meal) return null;
+        return formatMeal(meal, userIngredients);
+      } catch (e) {
+        return null;
+      }
+    })
+  );
+  return results.filter(Boolean);
+};
+
+// =========================================================
+// STATIC ROUTES FIRST
 // =========================================================
 
-// GET /api/recipes/saved/all — fetch user's saved recipes
+// GET /api/recipes/saved/all
 router.get('/saved/all', auth, async (req, res) => {
   try {
     res.json({ success: true, savedRecipes: req.user.savedRecipes });
@@ -20,21 +171,16 @@ router.get('/saved/all', auth, async (req, res) => {
   }
 });
 
-// POST /api/recipes/save — save a recipe
+// POST /api/recipes/save
 router.post('/save', auth, async (req, res) => {
   try {
     const { recipe } = req.body;
-
-    if (!recipe || !recipe.spoonacularId) {
+    if (!recipe || !recipe.id) {
       return res.status(400).json({ success: false, message: 'Recipe data is required.' });
     }
 
     const user = req.user;
-
-    // Check if already saved
-    const alreadySaved = user.savedRecipes.some(
-      r => r.spoonacularId === recipe.spoonacularId
-    );
+    const alreadySaved = user.savedRecipes.some(r => r.id === recipe.id);
     if (alreadySaved) {
       return res.status(400).json({ success: false, message: 'Recipe already saved.' });
     }
@@ -49,17 +195,13 @@ router.post('/save', auth, async (req, res) => {
   }
 });
 
-// DELETE /api/recipes/unsave/:spoonacularId — unsave a recipe
-router.delete('/unsave/:spoonacularId', auth, async (req, res) => {
+// DELETE /api/recipes/unsave/:id
+router.delete('/unsave/:id', auth, async (req, res) => {
   try {
-    const { spoonacularId } = req.params;
+    const { id } = req.params;
     const user = req.user;
-
-    user.savedRecipes = user.savedRecipes.filter(
-      r => r.spoonacularId !== parseInt(spoonacularId)
-    );
+    user.savedRecipes = user.savedRecipes.filter(r => r.id !== id);
     await user.save();
-
     res.json({ success: true, message: 'Recipe removed.', savedRecipes: user.savedRecipes });
   } catch (error) {
     console.error('Unsave recipe error:', error);
@@ -67,10 +209,12 @@ router.delete('/unsave/:spoonacularId', auth, async (req, res) => {
   }
 });
 
-// POST /api/recipes/find — find recipes by ingredients (primary endpoint)
+// =========================================================
+// POST /api/recipes/find — find recipes by ingredients
+// =========================================================
 router.post('/find', async (req, res) => {
   try {
-    const { ingredients } = req.body;
+    const { ingredients, vegetarian } = req.body;
 
     if (!ingredients || !Array.isArray(ingredients) || ingredients.length === 0) {
       return res.status(400).json({
@@ -79,50 +223,30 @@ router.post('/find', async (req, res) => {
       });
     }
 
-    const ingredientsStr = ingredients.join(',');
+    // FIX: raised from 5 → 8 ingredients searched
+    const mealMap = await fetchMealsByIngredients(ingredients, 8);
+    const mealIds = Object.keys(mealMap);
 
-    // Call Spoonacular findByIngredients API
-    const response = await axios.get(`${SPOONACULAR_BASE}/recipes/findByIngredients`, {
-      params: {
-        apiKey: process.env.SPOONACULAR_API_KEY,
-        ingredients: ingredientsStr,
-        number: 12,
-        ranking: 1,
-        ignorePantry: true
-      }
-    });
+    if (mealIds.length === 0) {
+      return res.json({ success: true, recipes: [], total: 0 });
+    }
 
-    const recipes = (response.data || []).map(recipe => {
-      const total = recipe.usedIngredientCount + recipe.missedIngredientCount;
-      return {
-        id: recipe.id,
-        title: recipe.title,
-        image: recipe.image,
-        usedIngredientCount: recipe.usedIngredientCount,
-        missedIngredientCount: recipe.missedIngredientCount,
-        matchPercentage: total > 0 ? Math.round((recipe.usedIngredientCount / total) * 100) : 0,
-        usedIngredients: (recipe.usedIngredients || []).map(i => ({
-          id: i.id,
-          name: i.name,
-          original: i.original,
-          image: i.image
-        })),
-        missedIngredients: (recipe.missedIngredients || []).map(i => ({
-          id: i.id,
-          name: i.name,
-          original: i.original,
-          image: i.image
-        }))
-      };
-    });
+    // FIX: fetch more (24) so filters have enough results, return 12
+    let recipes = await fetchDetailedMeals(mealIds, ingredients, 24);
 
-    res.json({
-      success: true,
-      recipes,
-      total: recipes.length
-    });
+    // Sort by match % descending
+    recipes.sort((a, b) => b.matchPercentage - a.matchPercentage);
+
+    // Vegetarian filter
+    if (vegetarian === true || vegetarian === 'true') {
+      recipes = recipes.filter(r => r.vegetarian);
+    }
+
+    recipes = recipes.slice(0, 12);
+
+    res.json({ success: true, recipes, total: recipes.length });
   } catch (error) {
-    console.error('Recipe find error:', error.response?.data || error.message);
+    console.error('Recipe find error:', error.message);
     res.status(500).json({
       success: false,
       message: 'Error finding recipes. Please try again.'
@@ -130,10 +254,12 @@ router.post('/find', async (req, res) => {
   }
 });
 
-// GET /api/recipes/search?ingredients=...&cuisine=...&diet=...&number=...
+// =========================================================
+// GET /api/recipes/search
+// =========================================================
 router.get('/search', async (req, res) => {
   try {
-    const { ingredients, cuisine, diet, number = 12 } = req.query;
+    const { ingredients, cuisine, vegetarian } = req.query;
 
     if (!ingredients) {
       return res.status(400).json({
@@ -142,94 +268,44 @@ router.get('/search', async (req, res) => {
       });
     }
 
-    // Use complexSearch for better filtering support
-    const params = {
-      apiKey: process.env.SPOONACULAR_API_KEY,
-      includeIngredients: ingredients,
-      number: Math.min(parseInt(number), 50),
-      addRecipeInformation: true,
-      addRecipeNutrition: true,
-      fillIngredients: true,
-      sort: 'max-used-ingredients',
-      ignorePantry: true
-    };
+    const ingredientList = ingredients.split(',').map(i => i.trim()).filter(Boolean);
 
-    if (cuisine) params.cuisine = cuisine;
-    if (diet) params.diet = diet;
+    // FIX: raised from 5 → 8 ingredients searched
+    const mealMap = await fetchMealsByIngredients(ingredientList, 8);
+    let mealIds = Object.keys(mealMap);
 
-    const response = await axios.get(`${SPOONACULAR_BASE}/recipes/complexSearch`, { params });
-
-    // Also get findByIngredients for match percentage
-    const ingredientResponse = await axios.get(`${SPOONACULAR_BASE}/recipes/findByIngredients`, {
-      params: {
-        apiKey: process.env.SPOONACULAR_API_KEY,
-        ingredients,
-        number: Math.min(parseInt(number), 50),
-        ranking: 1,
-        ignorePantry: true
+    // Cuisine filter — intersect with area results
+    if (cuisine && cuisine.toLowerCase() !== 'all') {
+      try {
+        const areaRes = await axios.get(`${MEALDB_BASE}/filter.php`, {
+          params: { a: cuisine },
+          timeout: 5000
+        });
+        const areaMealIds = new Set((areaRes.data?.meals || []).map(m => m.idMeal));
+        mealIds = mealIds.filter(id => areaMealIds.has(id));
+      } catch (e) {
+        console.warn('Cuisine filter failed:', e.message);
       }
-    });
-
-    // Create a map of recipe match info
-    const matchMap = {};
-    ingredientResponse.data.forEach(recipe => {
-      const total = recipe.usedIngredientCount + recipe.missedIngredientCount;
-      matchMap[recipe.id] = {
-        matchPercentage: total > 0 ? Math.round((recipe.usedIngredientCount / total) * 100) : 0,
-        usedIngredients: recipe.usedIngredients || [],
-        missedIngredients: recipe.missedIngredients || [],
-        usedIngredientCount: recipe.usedIngredientCount,
-        missedIngredientCount: recipe.missedIngredientCount
-      };
-    });
-
-    // Enrich search results with match data
-    const recipes = (response.data.results || []).map(recipe => {
-      const matchInfo = matchMap[recipe.id] || {};
-      return {
-        id: recipe.id,
-        title: recipe.title,
-        image: recipe.image,
-        readyInMinutes: recipe.readyInMinutes,
-        servings: recipe.servings,
-        vegetarian: recipe.vegetarian,
-        vegan: recipe.vegan,
-        glutenFree: recipe.glutenFree,
-        dairyFree: recipe.dairyFree,
-        healthScore: recipe.healthScore,
-        matchPercentage: matchInfo.matchPercentage || 0,
-        usedIngredientCount: matchInfo.usedIngredientCount || 0,
-        missedIngredientCount: matchInfo.missedIngredientCount || 0,
-        missedIngredients: matchInfo.missedIngredients || [],
-        difficulty: recipe.readyInMinutes <= 20 ? 'Easy' : recipe.readyInMinutes <= 45 ? 'Medium' : 'Hard'
-      };
-    });
-
-    // If complexSearch returned fewer results, supplement with findByIngredients
-    if (recipes.length === 0 && ingredientResponse.data.length > 0) {
-      const fallbackRecipes = ingredientResponse.data.map(recipe => {
-        const total = recipe.usedIngredientCount + recipe.missedIngredientCount;
-        return {
-          id: recipe.id,
-          title: recipe.title,
-          image: recipe.image,
-          matchPercentage: total > 0 ? Math.round((recipe.usedIngredientCount / total) * 100) : 0,
-          usedIngredientCount: recipe.usedIngredientCount,
-          missedIngredientCount: recipe.missedIngredientCount,
-          missedIngredients: recipe.missedIngredients || [],
-          difficulty: 'Medium'
-        };
-      });
-      return res.json({ success: true, recipes: fallbackRecipes, total: fallbackRecipes.length });
     }
 
-    res.json({
-      success: true,
-      recipes,
-      total: response.data.totalResults || recipes.length
-    });
+    if (mealIds.length === 0) {
+      return res.json({ success: true, recipes: [], total: 0 });
+    }
+
+    // FIX: fetch more so filters have enough to work with
+    let recipes = await fetchDetailedMeals(mealIds, ingredientList, 24);
+
+    recipes.sort((a, b) => b.matchPercentage - a.matchPercentage);
+
+    if (vegetarian === 'true') {
+      recipes = recipes.filter(r => r.vegetarian);
+    }
+
+    recipes = recipes.slice(0, 12);
+
+    res.json({ success: true, recipes, total: recipes.length });
   } catch (error) {
-    console.error('Recipe search error:', error.response?.data || error.message);
+    console.error('Recipe search error:', error.message);
     res.status(500).json({
       success: false,
       message: 'Error searching recipes. Please try again.'
@@ -237,116 +313,33 @@ router.get('/search', async (req, res) => {
   }
 });
 
-// GET /api/recipes/:id — get recipe details (MUST be last due to catch-all :id)
+// =========================================================
+// GET /api/recipes/:id — MUST BE LAST
+// =========================================================
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { userIngredients } = req.query;
 
-    // Fetch recipe info with nutrition
-    const [infoResponse, nutritionResponse] = await Promise.allSettled([
-      axios.get(`${SPOONACULAR_BASE}/recipes/${id}/information`, {
-        params: {
-          apiKey: process.env.SPOONACULAR_API_KEY,
-          includeNutrition: true
-        }
-      }),
-      axios.get(`${SPOONACULAR_BASE}/recipes/${id}/nutritionWidget.json`, {
-        params: {
-          apiKey: process.env.SPOONACULAR_API_KEY
-        }
-      })
-    ]);
+    const response = await axios.get(`${MEALDB_BASE}/lookup.php`, {
+      params: { i: id },
+      timeout: 5000
+    });
 
-    if (infoResponse.status === 'rejected') {
-      throw infoResponse.reason;
+    const meal = response.data?.meals?.[0];
+    if (!meal) {
+      return res.status(404).json({ success: false, message: 'Recipe not found.' });
     }
 
-    const recipe = infoResponse.value.data;
-
-    // Parse user ingredients for matching
     const userIngList = userIngredients
-      ? userIngredients.toLowerCase().split(',').map(i => i.trim())
+      ? userIngredients.split(',').map(i => i.trim()).filter(Boolean)
       : [];
 
-    // Categorize ingredients as have/missing
-    const ingredients = (recipe.extendedIngredients || []).map(ing => {
-      const ingName = ing.name.toLowerCase();
-      const have = userIngList.some(ui =>
-        ingName.includes(ui) || ui.includes(ingName)
-      );
-      return {
-        id: ing.id,
-        name: ing.name,
-        original: ing.original,
-        amount: ing.amount,
-        unit: ing.unit,
-        aisle: ing.aisle || 'Other',
-        have
-      };
-    });
+    const recipe = formatMeal(meal, userIngList);
 
-    // Extract nutrition from recipe info or dedicated nutrition endpoint
-    const nutrients = recipe.nutrition?.nutrients || [];
-    let nutrition = {
-      calories: nutrients.find(n => n.name === 'Calories'),
-      protein: nutrients.find(n => n.name === 'Protein'),
-      fat: nutrients.find(n => n.name === 'Fat'),
-      carbs: nutrients.find(n => n.name === 'Carbohydrates'),
-      fiber: nutrients.find(n => n.name === 'Fiber'),
-      sugar: nutrients.find(n => n.name === 'Sugar')
-    };
-
-    // If nutrition widget endpoint succeeded, enhance with that data
-    if (nutritionResponse.status === 'fulfilled') {
-      const nwData = nutritionResponse.value.data;
-      if (nwData) {
-        if (!nutrition.calories && nwData.calories) {
-          nutrition.calories = { amount: parseFloat(nwData.calories), unit: 'kcal', name: 'Calories' };
-        }
-        if (!nutrition.protein && nwData.protein) {
-          nutrition.protein = { amount: parseFloat(nwData.protein), unit: 'g', name: 'Protein' };
-        }
-        if (!nutrition.fat && nwData.fat) {
-          nutrition.fat = { amount: parseFloat(nwData.fat), unit: 'g', name: 'Fat' };
-        }
-        if (!nutrition.carbs && nwData.carbs) {
-          nutrition.carbs = { amount: parseFloat(nwData.carbs), unit: 'g', name: 'Carbohydrates' };
-        }
-      }
-    }
-
-    // Parse steps
-    const steps = (recipe.analyzedInstructions?.[0]?.steps || []).map(step => ({
-      number: step.number,
-      step: step.step,
-      ingredients: step.ingredients?.map(i => i.name) || [],
-      equipment: step.equipment?.map(e => e.name) || []
-    }));
-
-    res.json({
-      success: true,
-      recipe: {
-        id: recipe.id,
-        title: recipe.title,
-        image: recipe.image,
-        readyInMinutes: recipe.readyInMinutes,
-        servings: recipe.servings,
-        vegetarian: recipe.vegetarian,
-        vegan: recipe.vegan,
-        glutenFree: recipe.glutenFree,
-        dairyFree: recipe.dairyFree,
-        healthScore: recipe.healthScore,
-        summary: recipe.summary,
-        sourceUrl: recipe.sourceUrl,
-        ingredients,
-        steps,
-        nutrition,
-        difficulty: recipe.readyInMinutes <= 20 ? 'Easy' : recipe.readyInMinutes <= 45 ? 'Medium' : 'Hard'
-      }
-    });
+    res.json({ success: true, recipe });
   } catch (error) {
-    console.error('Recipe detail error:', error.response?.data || error.message);
+    console.error('Recipe detail error:', error.message);
     res.status(500).json({
       success: false,
       message: 'Error fetching recipe details.'

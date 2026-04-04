@@ -24,7 +24,8 @@ export const authAPI = {
 // Recipes API
 export const recipesAPI = {
   // POST /api/recipes/find — primary ingredient-based search
-  find: (ingredients) => api.post('/recipes/find', { ingredients }),
+  find: (ingredients, vegetarian = false) =>
+    api.post('/recipes/find', { ingredients, vegetarian }), // ← vegetarian added
 
   // GET /api/recipes/search — filtered search with cuisine/diet
   search: (params) => api.get('/recipes/search', { params }),
@@ -36,8 +37,8 @@ export const recipesAPI = {
   // POST /api/recipes/save — bookmark a recipe
   save: (recipe) => api.post('/recipes/save', { recipe }),
 
-  // DELETE /api/recipes/unsave/:spoonacularId — remove bookmark
-  unsave: (spoonacularId) => api.delete(`/recipes/unsave/${spoonacularId}`),
+  // DELETE /api/recipes/unsave/:id — remove bookmark
+  unsave: (id) => api.delete(`/recipes/unsave/${id}`),
 
   // GET /api/recipes/saved/all — get all saved recipes
   getSaved: () => api.get('/recipes/saved/all'),

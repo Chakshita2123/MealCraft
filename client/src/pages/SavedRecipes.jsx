@@ -32,11 +32,13 @@ export default function SavedRecipes() {
   };
 
   const handleUnsave = async (id) => {
+    // Optimistic update — remove instantly so UI feels snappy
+    setSavedRecipes(prev => prev.filter(r => r.spoonacularId !== id && r.id !== id));
     try {
       await recipesAPI.unsave(id);
-      setSavedRecipes(prev => prev.filter(r => r.spoonacularId !== id));
     } catch (err) {
       console.error('Unsave error:', err);
+      loadSaved(); // revert on failure
     }
   };
 
@@ -82,22 +84,26 @@ export default function SavedRecipes() {
         </div>
       ) : (
         <div className="saved-grid">
-          {savedRecipes.map((recipe) => (
-            <RecipeCard
-              key={recipe.spoonacularId}
-              recipe={{
-                id: recipe.spoonacularId,
-                title: recipe.title,
-                image: recipe.image,
-                readyInMinutes: recipe.readyInMinutes,
-                servings: recipe.servings,
-                vegetarian: recipe.vegetarian,
-                matchPercentage: recipe.matchPercentage || 0,
-              }}
-              isSaved={true}
-              onUnsave={() => handleUnsave(recipe.spoonacularId)}
-            />
-          ))}
+          {savedRecipes.map((recipe) => {
+            const recipeId = recipe.spoonacularId ?? recipe.id;
+            return (
+              <RecipeCard
+                key={recipeId}
+                recipe={{
+                  id: recipeId,
+                  title: recipe.title,
+                  image: recipe.image,
+                  readyInMinutes: recipe.readyInMinutes,
+                  servings: recipe.servings,
+                  vegetarian: recipe.vegetarian,
+                  matchPercentage: recipe.matchPercentage || 0,
+                }}
+                isSaved={true}
+                onSave={() => { }}
+                onUnsave={() => handleUnsave(recipeId)}
+              />
+            );
+          })}
         </div>
       )}
     </div>

@@ -80,7 +80,6 @@ export default function ScanPage() {
     e.preventDefault();
     const val = manualInput.trim();
     if (val) {
-      // Support comma-separated input
       const items = val.split(',').map(i => i.trim().toLowerCase()).filter(i => i);
       items.forEach(item => {
         dispatch({ type: 'ADD_INGREDIENT', payload: item });
@@ -92,24 +91,24 @@ export default function ScanPage() {
   const handleFindRecipes = async () => {
     if (ingredients.length === 0) return;
 
-    // If cuisine or diet filters are set, navigate to the full search page
-    if (selectedCuisine !== 'All' || isVegetarian) {
+    // If cuisine filter is set, navigate to search page
+    if (selectedCuisine !== 'All') {
       const params = new URLSearchParams();
       params.set('ingredients', ingredients.join(','));
-      if (isVegetarian) params.set('diet', 'vegetarian');
-      if (selectedCuisine !== 'All') params.set('cuisine', selectedCuisine);
+      if (isVegetarian) params.set('vegetarian', 'true'); // ← fixed: 'vegetarian' not 'diet'
+      params.set('cuisine', selectedCuisine);
       navigate(`/search?${params.toString()}`);
       return;
     }
 
-    // Otherwise, use the direct find endpoint and show results inline
+    // Use /find endpoint with vegetarian flag
     setSearching(true);
     setSearchError('');
     setSearched(true);
     setRecipes([]);
 
     try {
-      const res = await recipesAPI.find(ingredients);
+      const res = await recipesAPI.find(ingredients, isVegetarian); // ← isVegetarian passed
       if (res.data.success) {
         setRecipes(res.data.recipes || []);
       } else {
@@ -120,9 +119,9 @@ export default function ScanPage() {
       if (user) {
         try {
           const savedRes = await recipesAPI.getSaved();
-          const ids = new Set((savedRes.data.savedRecipes || []).map(r => r.spoonacularId));
+          const ids = new Set((savedRes.data.savedRecipes || []).map(r => r.id));
           setSavedIds(ids);
-        } catch {}
+        } catch { }
       }
     } catch (err) {
       console.error('Find recipes error:', err);
@@ -138,7 +137,7 @@ export default function ScanPage() {
     if (!user) return navigate('/login');
     try {
       await recipesAPI.save({
-        spoonacularId: recipe.id,
+        id: recipe.id, // ← fixed: id not spoonacularId
         title: recipe.title,
         image: recipe.image,
         readyInMinutes: recipe.readyInMinutes,
@@ -164,7 +163,7 @@ export default function ScanPage() {
   const handleViewAll = () => {
     const params = new URLSearchParams();
     params.set('ingredients', ingredients.join(','));
-    if (isVegetarian) params.set('diet', 'vegetarian');
+    if (isVegetarian) params.set('vegetarian', 'true'); // ← fixed
     if (selectedCuisine !== 'All') params.set('cuisine', selectedCuisine);
     navigate(`/search?${params.toString()}`);
   };
@@ -229,7 +228,8 @@ export default function ScanPage() {
 
         {/* Manual Input */}
         <div className="manual-section">
-          <label className="manual-label">Or type ingredients manually</label>
+          <div className="or-divider">or type manually</div>
+          <label className="manual-label">Add ingredients</label>
           <form onSubmit={handleAddManual} className="manual-form">
             <input
               type="text"

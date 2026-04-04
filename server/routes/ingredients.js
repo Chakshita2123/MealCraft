@@ -1,5 +1,5 @@
 const express = require('express');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const Groq = require('groq-sdk');
 
 const router = express.Router();
 
@@ -9,16 +9,29 @@ router.post('/detect', async (req, res) => {
     const { image, mimeType } = req.body;
 
     if (!image) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Please provide an image.' 
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide an image.'
       });
     }
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-    const prompt = `Analyze this image of a fridge or food items. Identify all visible food ingredients and produce.
+    const response = await groq.chat.completions.create({
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:${mimeType || 'image/jpeg'};base64,${image}`
+              }
+            },
+            {
+              type: 'text',
+              text: `Analyze this image of a fridge or food items. Identify all visible food ingredients and produce.
 
 Return ONLY a JSON array of ingredient names as simple strings. Use common, simple names suitable for recipe search.
 
@@ -30,29 +43,24 @@ Do NOT include:
 - Brand names
 - Prepared meals
 
-Return ONLY the JSON array, no other text. Example: ["eggs", "milk", "tomatoes", "bell pepper"]`;
+Return ONLY the JSON array, no other text. Example: ["eggs", "milk", "tomatoes", "bell pepper"]`
+            }
+          ]
+        }
+      ],
+      max_tokens: 500
+    });
 
-    const imagePart = {
-      inlineData: {
-        data: image,
-        mimeType: mimeType || 'image/jpeg'
-      }
-    };
-
-    const result = await model.generateContent([prompt, imagePart]);
-    const response = await result.response;
-    const text = response.text();
+    const text = response.choices[0].message.content;
 
     // Parse the JSON array from the response
     let ingredients = [];
     try {
-      // Try to extract JSON array from the response
       const jsonMatch = text.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
         ingredients = JSON.parse(jsonMatch[0]);
       }
     } catch (parseError) {
-      // If JSON parsing fails, try to extract ingredients from text
       ingredients = text
         .replace(/[\[\]"]/g, '')
         .split(',')
@@ -70,11 +78,12 @@ Return ONLY the JSON array, no other text. Example: ["eggs", "milk", "tomatoes",
       ingredients,
       count: ingredients.length
     });
+
   } catch (error) {
     console.error('Ingredient detection error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error detecting ingredients. Please try again or enter ingredients manually.' 
+    res.status(500).json({
+      success: false,
+      message: 'Error detecting ingredients. Please try again or enter ingredients manually.'
     });
   }
 });
