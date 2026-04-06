@@ -32,33 +32,31 @@ export default function RecipeDetail() {
   }, [id, userIngredients, user]);
 
   const loadRecipe = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const res = await recipesAPI.getById(id, userIngredients);
-        setRecipe(res.data.recipe);
-        setServings(res.data.recipe.servings || 2);
+    setLoading(true);
+    setError('');
+    try {
+      const res = await recipesAPI.getById(id, userIngredients);
+      setRecipe(res.data.recipe);
+      setServings(res.data.recipe.servings || 2);
 
-        if (user) {
-          try {
-            const savedRes = await recipesAPI.getSaved();
-            const saved = (savedRes.data.savedRecipes || []).some(
-              r => r.spoonacularId === parseInt(id)
-            );
-            setIsSaved(saved);
-          } catch {}
-        }
-      } catch (err) {
-        console.error('Failed to load recipe:', err);
-        setError(
-          err.response?.data?.message || 'Failed to load recipe details. Please try again.'
-        );
-      } finally {
-        setLoading(false);
+      if (user) {
+        try {
+          const savedRes = await recipesAPI.getSaved();
+          const saved = (savedRes.data.savedRecipes || []).some(
+            r => r.spoonacularId === parseInt(id)
+          );
+          setIsSaved(saved);
+        } catch {}
       }
-    };
-    loadRecipe();
-  }, [id, userIngredients, user]);
+    } catch (err) {
+      console.error('Failed to load recipe:', err);
+      setError(
+        err.response?.data?.message || 'Failed to load recipe details. Please try again.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Close popover when clicking outside
   useEffect(() => {
