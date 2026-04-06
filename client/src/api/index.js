@@ -30,6 +30,9 @@ export const recipesAPI = {
   // GET /api/recipes/search — filtered search with cuisine/diet
   search: (params) => api.get('/recipes/search', { params }),
 
+  // GET /api/recipes/search-by-name — search by recipe name
+  searchByName: (params) => api.get('/recipes/search-by-name', { params }),
+
   // GET /api/recipes/:id — recipe detail
   getById: (id, userIngredients) =>
     api.get(`/recipes/${id}`, { params: { userIngredients } }),
@@ -57,6 +60,14 @@ export const shoppingAPI = {
   toggleItem: (itemId) => api.put(`/shopping/toggle/${itemId}`),
   removeItem: (itemId) => api.delete(`/shopping/remove/${itemId}`),
   clearPurchased: () => api.delete('/shopping/clear-purchased'),
+};
+
+// Meal Plan API
+export const mealplanAPI = {
+  get: () => api.get('/mealplan'),
+  add: (day, slot, recipe) => api.post('/mealplan/add', { day, slot, recipe }),
+  remove: (day, slot) => api.delete('/mealplan/remove', { data: { day, slot } }),
+  generateShopping: () => api.post('/mealplan/generate-shopping'),
 };
 
 export default api;

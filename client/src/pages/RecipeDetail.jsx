@@ -3,9 +3,10 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { recipesAPI, shoppingAPI } from '../api';
 import { useAuth } from '../context/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
+import CookMode from '../components/CookMode';
 import {
   Clock, Users, Flame, Heart, ShoppingCart, ArrowLeft, ArrowRight,
-  Check, X, Leaf, WheatOff, Share2, Minus, Plus, AlertCircle
+  Check, X, Leaf, WheatOff, Share2, Minus, Plus, AlertCircle, ChefHat
 } from 'lucide-react';
 import './RecipeDetail.css';
 
@@ -22,6 +23,7 @@ export default function RecipeDetail() {
   const [addedToList, setAddedToList] = useState(false);
   const [servings, setServings] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [cookMode, setCookMode] = useState(false);
 
   const userIngredients = searchParams.get('ingredients') || '';
 
@@ -211,6 +213,12 @@ export default function RecipeDetail() {
             <Share2 size={18} />
             Share
           </button>
+          {recipe.steps && recipe.steps.length > 0 && (
+            <button className="action-btn cook-btn" onClick={() => setCookMode(true)}>
+              <ChefHat size={18} />
+              Start Cooking
+            </button>
+          )}
         </div>
 
         {/* Servings Adjuster */}
@@ -324,6 +332,16 @@ export default function RecipeDetail() {
           </section>
         )}
       </div>
+
+      {/* Cook Mode */}
+      {cookMode && recipe.steps && recipe.steps.length > 0 && (
+        <CookMode
+          steps={recipe.steps}
+          ingredients={recipe.ingredients}
+          title={recipe.title}
+          onExit={() => setCookMode(false)}
+        />
+      )}
     </div>
   );
 }

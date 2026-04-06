@@ -152,6 +152,19 @@
   background: rgba(224, 122, 95, 0.06);
 }
 
+.action-btn.cook-btn {
+  background: linear-gradient(135deg, #C4622D, #E07A3A) !important;
+  color: white !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 12px rgba(196, 98, 45, 0.35);
+  transition: all 0.25s ease;
+}
+
+.action-btn.cook-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(196, 98, 45, 0.45);
+}
+
 /* Servings Adjuster */
 .servings-adjuster {
   display: flex;
