@@ -71,4 +71,13 @@ export const mealplanAPI = {
   generateShopping: () => api.post('/mealplan/generate-shopping'),
 };
 
+// Nutrition API
+export const nutritionAPI = {
+  getToday: () => api.get('/nutrition/today'),
+  log: (data) => api.post('/nutrition/log', data),
+  remove: (mealId) => api.delete('/nutrition/remove', { data: { mealId } }),
+  getWeekly: () => api.get('/nutrition/weekly'),
+  search: (q) => api.get('/nutrition/search', { params: { q } }),
+};
+
 export default api;

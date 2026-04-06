@@ -13,6 +13,7 @@ import RecipeDetail from './pages/RecipeDetail';
 import SavedRecipes from './pages/SavedRecipes';
 import ShoppingList from './pages/ShoppingList';
 import MealPlanner from './pages/MealPlanner';
+import NutritionTracker from './pages/NutritionTracker';
 import './index.css';
 
 function AppRoutes() {
@@ -38,6 +39,7 @@ function AppRoutes() {
         <Route path="/search" element={<ProtectedRoute><SearchResults /></ProtectedRoute>} />
         <Route path="/recipe/:id" element={<ProtectedRoute><RecipeDetail /></ProtectedRoute>} />
         <Route path="/saved" element={<ProtectedRoute><SavedRecipes /></ProtectedRoute>} />
+        <Route path="/nutrition" element={<ProtectedRoute><NutritionTracker /></ProtectedRoute>} />
         <Route path="/planner" element={<ProtectedRoute><MealPlanner /></ProtectedRoute>} />
         <Route path="/shopping" element={<ProtectedRoute><ShoppingList /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />

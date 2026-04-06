@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Camera, Search, ShoppingCart, Heart, LogOut, Menu, X, ChefHat, Calendar } from 'lucide-react';
+import { Camera, Search, ShoppingCart, Heart, LogOut, Menu, X, ChefHat, Calendar, Activity } from 'lucide-react';
 import { useState } from 'react';
 import './Navbar.css';
 
@@ -21,6 +21,7 @@ export default function Navbar() {
     { to: '/scan', label: 'Scan', icon: <Camera size={18} /> },
     { to: '/search?mode=name', label: 'Recipes', icon: <Search size={18} /> },
     { to: '/saved', label: 'Saved', icon: <Heart size={18} /> },
+    { to: '/nutrition', label: 'Nutrition', icon: <Activity size={18} /> },
     { to: '/planner', label: 'Planner', icon: <Calendar size={18} /> },
     { to: '/shopping', label: 'Shopping', icon: <ShoppingCart size={18} /> },
   ];
