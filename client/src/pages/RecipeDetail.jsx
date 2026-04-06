@@ -28,7 +28,10 @@ export default function RecipeDetail() {
   const userIngredients = searchParams.get('ingredients') || '';
 
   useEffect(() => {
-    const loadRecipe = async () => {
+    loadRecipe();
+  }, [id, userIngredients, user]);
+
+  const loadRecipe = async () => {
       setLoading(true);
       setError('');
       try {
@@ -56,6 +59,17 @@ export default function RecipeDetail() {
     };
     loadRecipe();
   }, [id, userIngredients, user]);
+
+  // Close popover when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (closePopoverRef.current && !closePopoverRef.current.contains(e.target)) {
+        setSubPopover({});
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   const handleSave = async () => {
     if (!user) return navigate('/login');

@@ -88,4 +88,69 @@ Return ONLY the JSON array, no other text. Example: ["eggs", "milk", "tomatoes",
   }
 });
 
+// POST /api/ingredients/substitute
+router.post('/substitute', async (req, res) => {
+  try {
+    const { ingredient, recipeTitle, recipeType } = req.body;
+
+    if (!ingredient) {
+      return res.status(400).json({
+        success: false,
+        message: 'Ingredient is required'
+      });
+    }
+
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+    const prompt = `For the recipe '${recipeTitle}', suggest 2-3 common substitutes for '${ingredient}'. Be brief, just list the substitutes with a one-line note. Consider Indian pantry staples as options. Format as JSON array like:
+[{ substitute: 'name', note: 'one line reason' }]
+Return ONLY the JSON array, nothing else.`;
+
+    const response = await groq.chat.completions.create({
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+      messages: [
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      max_tokens: 300,
+      temperature: 0.7
+    });
+
+    const text = response.choices[0].message.content;
+
+    // Parse JSON array from response
+    let substitutes = [];
+    try {
+      const jsonMatch = text.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        substitutes = JSON.parse(jsonMatch[0]);
+        // Validate structure
+        if (Array.isArray(substitutes) && substitutes.every(s => s.substitute && s.note)) {
+          res.json({
+            success: true,
+            ingredient,
+            substitutes
+          });
+          return;
+        }
+      }
+    } catch (parseError) {
+      // Fall through to error handling
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Failed to parse substitution suggestions'
+    });
+  } catch (error) {
+    console.error('Substitute error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get substitution suggestions'
+    });
+  }
+});
+
 module.exports = router;
