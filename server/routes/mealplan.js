@@ -6,6 +6,26 @@ const MealPlan = require('../models/MealPlan');
 const router = express.Router();
 
 const MEALDB_BASE = 'https://www.themealdb.com/api/json/v1/1';
+const SPOONACULAR_BASE = 'https://api.spoonacular.com/recipes';
+
+// Simple in-memory cache for suggestions (1 hour TTL)
+const suggestionsCache = {};
+const getCacheKey = (slot) => `suggestions_${slot}`;
+const setCacheEntry = (key, value) => {
+  suggestionsCache[key] = { data: value, timestamp: Date.now() };
+};
+const getCacheEntry = (key) => {
+  const entry = suggestionsCache[key];
+  if (!entry) return null;
+  const now = Date.now();
+  const cacheAge = now - entry.timestamp;
+  const ONE_HOUR = 60 * 60 * 1000;
+  if (cacheAge > ONE_HOUR) {
+    delete suggestionsCache[key];
+    return null;
+  }
+  return entry.data;
+};
 
 // Helper: categorize ingredient by aisle
 const categorizeIngredient = (aisle) => {
@@ -148,6 +168,71 @@ router.delete('/remove', auth, async (req, res) => {
   } catch (error) {
     console.error('Remove meal plan error:', error.message);
     res.status(500).json({ success: false, message: 'Error removing meal from plan.' });
+  }
+});
+
+// =========================================================
+// GET /api/mealplan/suggestions
+// =========================================================
+router.get('/suggestions', auth, async (req, res) => {
+  try {
+    const { slot } = req.query;
+    
+    if (!slot || !['breakfast', 'lunch', 'dinner'].includes(slot)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid slot required: breakfast, lunch, or dinner'
+      });
+    }
+
+    // Check cache first
+    const cacheKey = getCacheKey(slot);
+    const cached = getCacheEntry(cacheKey);
+    if (cached) {
+      return res.json({ success: true, recipes: cached });
+    }
+
+    let meals = [];
+    
+    // Use MealDB to fetch suggestions by category
+    if (slot === 'breakfast') {
+      // Get Breakfast category meals
+      const response = await axios.get(`${MEALDB_BASE}/filter.php?c=Breakfast`, { timeout: 5000 });
+      meals = (response.data.meals || []).slice(0, 6);
+    } else {
+      // For lunch and dinner, search popular main courses
+      // Get a few popular meals by searching various ingredients
+      const popularSearches = ['Chicken', 'Beef', 'Pasta'];
+      for (const search of popularSearches) {
+        if (meals.length >= 6) break;
+        try {
+          const response = await axios.get(`${MEALDB_BASE}/filter.php?i=${search}`, { timeout: 5000 });
+          const newMeals = (response.data.meals || []).filter(
+            meal => !meals.some(m => m.idMeal === meal.idMeal)
+          );
+          meals.push(...newMeals.slice(0, 6 - meals.length));
+        } catch (err) {
+          // Skip failed searches
+        }
+      }
+    }
+
+    const recipes = meals.map(meal => ({
+      id: meal.idMeal,
+      title: meal.strMeal,
+      image: meal.strMealThumb,
+      readyInMinutes: null, // MealDB doesn't provide cooking time
+      vegetarian: false
+    }));
+
+    // Cache the results
+    setCacheEntry(cacheKey, recipes);
+
+    res.json({ success: true, recipes });
+  } catch (error) {
+    console.error('Get suggestions error:', error.message);
+    // Silently return empty array on error
+    res.json({ success: true, recipes: [] });
   }
 });
 

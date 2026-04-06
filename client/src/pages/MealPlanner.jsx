@@ -38,6 +38,8 @@ export default function MealPlanner() {
   const [searchResults, setSearchResults] = useState([]);
   const [pickerLoading, setPickerLoading] = useState(false);
   const [savedRecipes, setSavedRecipes] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
 
   // Load meal plan on mount
   useEffect(() => {
@@ -110,11 +112,27 @@ export default function MealPlanner() {
     return () => clearTimeout(debounceTimer);
   }, [searchQuery, savedRecipes]);
 
-  const handleSlotClick = (day, slot) => {
+  const handleSlotClick = async (day, slot) => {
     setSelectedSlot({ day, slot });
     setSearchQuery('');
     setSearchResults(savedRecipes.slice(0, 10));
     setModalOpen(true);
+    
+    // Fetch suggestions in parallel
+    setSuggestionsLoading(true);
+    try {
+      const res = await mealplanAPI.getSuggestions(slot);
+      setSuggestions(res.data.recipes || []);
+    } catch (err) {
+      console.error('Fetch suggestions error:', err);
+      setSuggestions([]);
+    } finally {
+      setSuggestionsLoading(false);
+    }
+  };
+
+  const handlePickRecipe = async (recipe) => {
+    await handleRecipeSelect(recipe);
   };
 
   const handleRecipeSelect = async (recipe) => {
@@ -295,6 +313,45 @@ export default function MealPlanner() {
               >
                 <X size={24} />
               </button>
+            </div>
+
+            {/* Suggestions strip */}
+            <div className="suggestions-strip">
+              <div className="suggestions-label">
+                ✨ Suggested for {selectedSlot?.slot === 'breakfast' ? 'Breakfast' : 
+                                   selectedSlot?.slot === 'lunch' ? 'Lunch' : 'Dinner'}
+              </div>
+              {suggestionsLoading ? (
+                <div className="suggestions-loading">
+                  <div className="btn-spinner dark" />
+                </div>
+              ) : (
+                <div className="suggestions-scroll">
+                  {suggestions.length > 0 ? (
+                    suggestions.map(recipe => (
+                      <motion.div
+                        key={recipe.id}
+                        className="suggestion-card"
+                        onClick={() => handlePickRecipe(recipe)}
+                        whileHover={{ scale: 1.04, y: -3 }}
+                        whileTap={{ scale: 0.97 }}
+                      >
+                        <img src={recipe.image} alt={recipe.title} className="suggestion-img" />
+                        <div className="suggestion-overlay">
+                          <span className="suggestion-title">{recipe.title}</span>
+                          {recipe.readyInMinutes && (
+                            <span className="suggestion-time">⏱ {recipe.readyInMinutes} min</span>
+                          )}
+                        </div>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', padding: '0.5rem' }}>
+                      No suggestions available
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="picker-search">

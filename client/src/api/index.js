@@ -67,6 +67,7 @@ export const mealplanAPI = {
   get: () => api.get('/mealplan'),
   add: (day, slot, recipe) => api.post('/mealplan/add', { day, slot, recipe }),
   remove: (day, slot) => api.delete('/mealplan/remove', { data: { day, slot } }),
+  getSuggestions: (slot) => api.get('/mealplan/suggestions', { params: { slot } }),
   generateShopping: () => api.post('/mealplan/generate-shopping'),
 };
 
